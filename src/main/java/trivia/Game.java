@@ -5,9 +5,11 @@ import java.util.LinkedList;
 
 public class Game {
     ArrayList players = new ArrayList();
-    int[] places = new int[6];
-    int[] purses  = new int[6];
-    boolean[] inPenaltyBox  = new boolean[6];
+    int[] places = new int[6]; // why is place an int? // max players is 6?
+    // place determines the next category?
+    int[] purses  = new int[6]; // contains player "Gold". Need to win the game
+    boolean[] inPenaltyBox  = new boolean[6]; // no real impact on game, just a player status
+
 
     LinkedList popQuestions = new LinkedList();
     LinkedList scienceQuestions = new LinkedList();
@@ -30,6 +32,7 @@ public class Game {
         return "Rock Question " + index;
     }
 
+    // not even called, but supposed to have 2 or more players?
     public boolean isPlayable() {
         return (howManyPlayers() >= 2);
     }
@@ -44,46 +47,58 @@ public class Game {
 
         System.out.println(playerName + " was added");
         System.out.println("They are player number " + players.size());
-        return true;
+        return true; // redundant
     }
 
     public int howManyPlayers() {
         return players.size();
     }
 
-    public void roll(int roll) {
+    // A turn involves:
+    // getting a player's roll
+    // handling penalty box situation
+    // move player's place/location
+    // asking a question
+    // handling answering (correct/wrong)
+
+    // set next player's turn
+    // check if current player has won
+
+
+    // Penalty abstraction is not clear
+    // player can be placed in penalty box but there's nothing in this code that removes player from penalty box
+    // also, is the only reason to have a penalty box to prevent someone "moving out" from the penalty box
+    // a chance to win that round? can't "get out of penalty box" if roll is even.
+
+    public void roll(int roll) { // more like "playTurn". roll gets a random 1-5
         System.out.println(players.get(currentPlayer) + " is the current player");
         System.out.println("They have rolled a " + roll);
 
+        // can only get out of penalty box if roll is odd
+
+        // can use guard clause here for just not getting out penalty box, e.g. if roll is even
+        // get player out of penalty box
         if (inPenaltyBox[currentPlayer]) {
-            if (roll % 2 != 0) {
-                isGettingOutOfPenaltyBox = true;
-
-                System.out.println(players.get(currentPlayer) + " is getting out of the penalty box");
-                places[currentPlayer] = places[currentPlayer] + roll;
-                if (places[currentPlayer] > 11) places[currentPlayer] = places[currentPlayer] - 12;
-
-                System.out.println(players.get(currentPlayer)
-                        + "'s new location is "
-                        + places[currentPlayer]);
-                System.out.println("The category is " + currentCategory());
-                askQuestion();
-            } else {
+            if (roll % 2 == 0) {
                 System.out.println(players.get(currentPlayer) + " is not getting out of the penalty box");
                 isGettingOutOfPenaltyBox = false;
+            } else {
+                isGettingOutOfPenaltyBox = true;
+                System.out.println(players.get(currentPlayer) + " is getting out of the penalty box");
             }
-
-        } else {
-
-            places[currentPlayer] = places[currentPlayer] + roll;
-            if (places[currentPlayer] > 11) places[currentPlayer] = places[currentPlayer] - 12;
-
-            System.out.println(players.get(currentPlayer)
-                    + "'s new location is "
-                    + places[currentPlayer]);
-            System.out.println("The category is " + currentCategory());
-            askQuestion();
         }
+
+        // set player place -> a way to use roll to affect the next category
+        places[currentPlayer] = places[currentPlayer] + roll;
+        if (places[currentPlayer] > 11) places[currentPlayer] = places[currentPlayer] - 12;
+
+        System.out.println(players.get(currentPlayer)
+                + "'s new location is "
+                + places[currentPlayer]);
+
+        // get new category's question
+        System.out.println("The category is " + currentCategory());
+        askQuestion();
 
     }
 
@@ -114,7 +129,7 @@ public class Game {
 
     public boolean wasCorrectlyAnswered() {
         if (inPenaltyBox[currentPlayer]){
-            if (isGettingOutOfPenaltyBox) {
+            if (isGettingOutOfPenaltyBox) { // does he not get out of penalty box ever?
                 System.out.println("Answer was correct!!!!");
                 purses[currentPlayer]++;
                 System.out.println(players.get(currentPlayer)
@@ -130,10 +145,8 @@ public class Game {
             } else {
                 currentPlayer++;
                 if (currentPlayer == players.size()) currentPlayer = 0;
-                return true;
+                return true; // true will actually continue the loop here
             }
-
-
 
         } else {
 
@@ -157,13 +170,14 @@ public class Game {
         System.out.println(players.get(currentPlayer)+ " was sent to the penalty box");
         inPenaltyBox[currentPlayer] = true;
 
-        currentPlayer++;
-        if (currentPlayer == players.size()) currentPlayer = 0;
+        currentPlayer++; // use % to make the looping back to 0 index intent more explicit
+        if (currentPlayer == players.size()) currentPlayer = 0; // next turn
         return true;
     }
 
 
     private boolean didPlayerWin() {
-        return !(purses[currentPlayer] == 6);
+        return !(purses[currentPlayer] == 6); // why returning a NOT just because the outer loop needs a false to exist the
+        // while loop!!
     }
 }
